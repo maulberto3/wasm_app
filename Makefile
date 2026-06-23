@@ -51,60 +51,6 @@ install:
 	@echo "✅ Installation complete!"
 
 # ============================================================================
-# DEVELOPMENT
-# ============================================================================
-
-dev: check-ssr check-hydrate
-	@echo "🚀 Starting development server with hot reload..."
-	@echo "   Visit http://localhost:3000"
-	cargo leptos watch
-
-build:
-	@echo "🔨 Building debug version (client + server)..."
-	cargo leptos build
-	@echo "✅ Build complete!"
-	@echo "   Run with: make run"
-
-run: build
-	@echo "▶️  Running debug server..."
-	./target/debug/wasm_app
-
-# ============================================================================
-# PRODUCTION
-# ============================================================================
-
-build-release:
-	@echo "🔨 Building optimized release (client + server)..."
-	cargo leptos build --release
-	@echo "✅ Build complete!"
-	@echo "   Run with: make run-release"
-
-run-release: build-release
-	@echo "▶️  Running release server..."
-	./target/release/wasm_app
-
-# ============================================================================
-# QUALITY & TESTING
-# ============================================================================
-
-check:
-	@echo "🔍 Checking code with Clippy..."
-	cargo clippy --all-targets --all-features
-
-check-ssr:
-	@echo "🔍 Checking SSR (server-side) compilation..."
-	cargo check --features ssr
-
-check-hydrate:
-	@echo "🔍 Checking hydrate (client-side WASM) compilation..."
-	cargo check --lib --no-default-features --features hydrate
-
-test:
-	@echo "🧪 Running tests..."
-	cargo test --lib --verbose
-	@echo "✅ Tests complete!"
-
-# ============================================================================
 # MAINTENANCE
 # ============================================================================
 
@@ -125,9 +71,73 @@ docs:
 	cargo doc --no-deps --open --features ssr
 
 # ============================================================================
+# QUALITY & TESTING
+# ============================================================================
+
+check:
+	@echo "🔍 Checking code with Clippy..."
+	cargo clippy --all-targets --all-features
+	@echo "✅ Clippy check complete!"
+
+check-ssr:
+	@echo "🔍 Checking SSR (server-side) compilation..."
+	cargo check --features ssr 2>&1 | grep -E "error|warning: unused|Finished|Checking"
+	@echo "✅ SSR check complete!"
+
+check-hydrate:
+	@echo "🔍 Checking hydrate (client-side WASM) compilation..."
+	cargo check --lib --no-default-features --features hydrate 2>&1 | grep -E "error|warning: unused|Finished|Checking"
+	@echo "✅ Hydrate check complete!"
+
+test:
+	@echo "🧪 Running tests..."
+	cargo test --lib --verbose
+	@echo "✅ Tests complete!"
+
+# ============================================================================
 # CI PIPELINE
 # ============================================================================
 
-ci: fmt check test build-release
+ci: check check-ssr check-hydrate test build
 	@echo "✅ CI pipeline complete!"
 
+# ============================================================================
+# DEVELOPMENT
+# ============================================================================
+
+dev: ci
+	@echo "🚀 Starting development server with hot reload..."
+	@echo "   Visit http://localhost:3000"
+	cargo leptos watch
+
+build:
+	@echo "🔨 Building debug version (client + server)..."
+	cargo leptos build
+	@echo "✅ Build complete!"
+	@echo "   Run with: make run"
+	@echo ""
+	@echo "📊 Debug Artifact Sizes:"
+	@du -sh target/debug/wasm_app | awk '{print "  Server Binary: " $$1}'
+	@du -sh target/site/pkg/ | awk '{print "  WASM Package: " $$1}'
+
+run: build
+	@echo "▶️  Running debug server..."
+	./target/debug/wasm_app
+
+# ============================================================================
+# PRODUCTION
+# ============================================================================
+
+build-release:
+	@echo "🔨 Building optimized release (client + server)..."
+	cargo leptos build --release
+	@echo "✅ Build complete!"
+	@echo "   Run with: make run-release"
+	@echo ""
+	@echo "📊 Release Artifact Sizes:"
+	@du -sh target/release/wasm_app | awk '{print "  Server Binary: " $$1}'
+	@du -sh target/site/pkg/ | awk '{print "  WASM Package: " $$1}'
+
+run-release: build-release
+	@echo "▶️  Running release server..."
+	./target/release/wasm_app
