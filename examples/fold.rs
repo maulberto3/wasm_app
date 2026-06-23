@@ -63,3 +63,8 @@
 //     println!("Best Individual: {:+.3}", best_y);
 //     println!("=======================================\n");
 // }
+
+fn main() {
+    println!("This is a placeholder for the CMA-ES fold example.");
+    println!("Please uncomment the code in main.rs to run the optimization example.");
+}
