@@ -45,6 +45,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-build-target-
       
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features
+        
       - name: Check SSR compilation
         run: cargo check --features ssr
       
