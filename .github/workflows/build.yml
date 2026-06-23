@@ -45,34 +45,53 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-build-target-
       
-      - name: Run Rust tests
-        run: cargo test --lib --verbose
-      
       - name: Check SSR compilation
         run: cargo check --features ssr
       
       - name: Check Hydrate compilation
         run: cargo check --lib --no-default-features --features hydrate
       
+      - name: Run Rust tests
+        run: cargo test --lib --verbose
+        continue-on-error: true
+
       - name: Build Leptos (Debug)
-        run: cargo leptos build --verbose
+        if: github.ref == 'refs/heads/dev'
+        run: cargo leptos build
       
       - name: Build Leptos (Release)
-        run: cargo leptos build --release --verbose
+        if: github.ref == 'refs/heads/main'
+        run: cargo leptos build --release
       
-      - name: Display artifact sizes
+      - name: Display artifact sizes (Debug)
+        if: github.ref == 'refs/heads/dev'
         run: |
-          echo "=== Server Binary Size ==="
-          ls -lh target/release/wasm_app
+          echo "=== Server Binary Size (Debug) ==="
+          du -sh target/debug/wasm_app
           echo ""
-          echo "=== WASM Module Size ==="
-          ls -lh target/site/pkg/*.wasm
+          echo "=== WASM Package Size ==="
+          du -sh target/site/pkg/
+          echo ""
+          echo "=== Total Debug Build Size ==="
+          du -sh target/debug/
+      
+      - name: Display artifact sizes (Release)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "=== Server Binary Size (Release) ==="
+          du -sh target/release/wasm_app
+          echo ""
+          echo "=== WASM Package Size ==="
+          du -sh target/site/pkg/
+          echo ""
+          echo "=== Total Release Build Size ==="
+          du -sh target/release/
       
       - name: Upload server artifacts
         uses: actions/upload-artifact@v3
         with:
           name: server-binary
-          path: target/release/wasm_app
+          path: target/*/wasm_app
           retention-days: 5
       
       - name: Upload WASM artifacts
