@@ -2,9 +2,9 @@ name: Build & Test
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, dev]
   pull_request:
-    branches: [main, develop]
+    branches: [main, dev]
 
 jobs:
   build:
@@ -48,6 +48,12 @@ jobs:
       - name: Run Rust tests
         run: cargo test --lib --verbose
       
+      - name: Check SSR compilation
+        run: cargo check --features ssr
+      
+      - name: Check Hydrate compilation
+        run: cargo check --lib --no-default-features --features hydrate
+      
       - name: Build Leptos (Debug)
         run: cargo leptos build --verbose
       
@@ -57,22 +63,22 @@ jobs:
       - name: Display artifact sizes
         run: |
           echo "=== Server Binary Size ==="
-          ls -lh target/release/wasm_app_server
+          ls -lh target/release/wasm_app
           echo ""
           echo "=== WASM Module Size ==="
-          ls -lh target/release/wasm_app_server/site/pkg/*.wasm
+          ls -lh target/site/pkg/*.wasm
       
       - name: Upload server artifacts
         uses: actions/upload-artifact@v3
         with:
           name: server-binary
-          path: target/release/wasm_app_server
+          path: target/release/wasm_app
           retention-days: 5
       
       - name: Upload WASM artifacts
         uses: actions/upload-artifact@v3
         with:
           name: wasm-package
-          path: target/release/wasm_app_server/site/pkg/
+          path: target/site/pkg/
           retention-days: 5
 
