@@ -65,6 +65,13 @@ hydrate = [
     "dep:console_error_panic_hook",
 ]
 
+# Fast compilation for development
+[profile.dev]
+opt-level = 0
+debug = true
+lto = false
+codegen-units = 256
+
 # Defines a size-optimized profile for the WASM bundle in release mode
 [profile.wasm-release]
 inherits = "release"
@@ -73,6 +80,7 @@ lto = true
 codegen-units = 1
 panic = "abort"
 
+# Optimized for production
 [profile.release]
 opt-level = "z"
 lto = true
