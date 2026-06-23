@@ -1,0 +1,9 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["*.{css,gif,ico,jpg,js,png,svg,webp,webmanifest}"]
+  },
+  "mimeTypes": {
+    ".wasm": "application/wasm"
+  }
+}

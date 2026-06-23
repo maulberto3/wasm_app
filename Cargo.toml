@@ -1,0 +1,123 @@
+[package]
+name = "wasm_app"
+version = "0.1.0"
+edition = "2021"
+description = "A full-stack Rust web app with CMA-ES optimization and Leptos frontend"
+license = "MIT"
+repository = "https://github.com/yourusername/wasm_app"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "wasm_app"
+path = "src/main.rs"
+required-features = ["ssr"]
+
+[dependencies]
+# Leptos and frontend
+leptos = { version = "0.8.0", features = ["nightly"] }
+leptos_meta = { version = "0.8.0" }
+leptos_router = { version = "0.8.0", features = ["nightly"] }
+leptos_axum = { version = "0.8.0", optional = true }
+leptos_config = { version = "0.8.0", optional = true }
+
+# Backend
+axum = { version = "0.8.0", optional = true }
+tokio = { version = "1", features = ["rt-multi-thread"], optional = true }
+tower = { version = "0.4", optional = true }
+tower-http = { version = "0.5", features = ["fs"], optional = true }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+
+# WASM
+wasm-bindgen = { version = "0.2.106", optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
+web-sys = { version = "0.3", optional = true }
+js-sys = { version = "0.3", optional = true }
+
+# Utilities
+log = "0.4"
+
+# Config
+dotenvy = { version = "0.15", optional = true }
+
+[dev-dependencies]
+
+[features]
+default = ["ssr"]
+ssr = [
+    "dep:axum",
+    "dep:tokio",
+    "dep:leptos_axum",
+    "dep:leptos_config",
+    "dep:dotenvy",
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
+]
+hydrate = [
+    "leptos/hydrate",
+    "dep:wasm-bindgen",
+    "dep:console_error_panic_hook",
+]
+
+# Defines a size-optimized profile for the WASM bundle in release mode
+[profile.wasm-release]
+inherits = "release"
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+
+[package.metadata.leptos]
+# The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle
+output-name = "wasm_app"
+
+# The site root folder is where cargo-leptos generates all output
+site-root = "target/site"
+
+# The site-root relative folder where all compiled output is written
+site-pkg-dir = "pkg"
+
+# The source CSS file
+style-file = "style/main.css"
+
+# Assets source dir
+assets-dir = "public"
+
+# The IP and port where the server serves the content
+site-addr = "127.0.0.1:3000"
+
+# The port to use for automatic reload monitoring
+reload-port = 3001
+
+# The browserlist query used for optimizing the CSS
+browserquery = "defaults"
+
+# The environment Leptos will run in
+env = "DEV"
+
+# The features to use when compiling the bin target
+bin-features = ["ssr"]
+
+# If the --no-default-features flag should be used for bin target
+bin-default-features = false
+
+# The features to use when compiling the lib target
+lib-features = ["hydrate"]
+
+# If the --no-default-features flag should be used for lib target
+lib-default-features = false
+
+# The profile to use for the lib target when compiling for release
+lib-profile-release = "wasm-release"
+

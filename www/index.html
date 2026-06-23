@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASM App Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            color: #333;
+            margin: 0 0 10px 0;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .demo-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .status {
+            text-align: center;
+            padding: 20px;
+            background: #e8f4f8;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .loading {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 WASM App Demo</h1>
+        <p class="subtitle">Rust compiled to WebAssembly</p>
+        
+        <div class="status">
+            <div id="loading" class="loading">⏳</div>
+            <p id="statusText">Loading WASM module...</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>Basic Operations</h2>
+            <div>
+                <input type="number" id="num1" placeholder="Number 1" value="5">
+                <input type="number" id="num2" placeholder="Number 2" value="3">
+                <button onclick="testAdd()">Add Numbers</button>
+            </div>
+            <div id="addResult" class="result"></div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Greeting</h2>
+            <div>
+                <input type="text" id="nameInput" placeholder="Enter your name" value="World">
+                <button onclick="testGreet()">Greet</button>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Optimizer</h2>
+            <div>
+                <label>Learning Rate: <input type="number" id="lr" step="0.001" value="0.01" style="width: 80px;"></label><br>
+                <label>Max Iterations: <input type="number" id="maxIter" value="1000" style="width: 100px;"></label><br>
+                <label>Initial Value: <input type="number" id="initVal" step="0.1" value="1.0" style="width: 80px;"></label>
+                <button onclick="testOptimizer()">Optimize</button>
+            </div>
+            <div id="optimizerResult" class="result"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import init, { greet, add, Optimizer } from './pkg/wasm_app.js';
+
+        async function initWasm() {
+            try {
+                await init();
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('statusText').innerText = '✅ WASM module loaded successfully!';
+            } catch (error) {
+                document.getElementById('statusText').innerText = '❌ Failed to load WASM module: ' + error.message;
+                console.error('Failed to initialize WASM:', error);
+            }
+        }
+
+        window.testAdd = function() {
+            const num1 = parseFloat(document.getElementById('num1').value);
+            const num2 = parseFloat(document.getElementById('num2').value);
+            const result = add(num1, num2);
+            const resultDiv = document.getElementById('addResult');
+            resultDiv.innerHTML = `<strong>${num1} + ${num2} = ${result}</strong>`;
+            resultDiv.classList.add('show');
+        };
+
+        window.testGreet = function() {
+            const name = document.getElementById('nameInput').value || 'World';
+            greet(name);
+            const resultDiv = document.getElementById('addResult');
+            resultDiv.innerHTML = `<strong>Check console for greeting output!</strong>`;
+            resultDiv.classList.add('show');
+        };
+
+        window.testOptimizer = function() {
+            const lr = parseFloat(document.getElementById('lr').value);
+            const maxIter = parseInt(document.getElementById('maxIter').value);
+            const initVal = parseFloat(document.getElementById('initVal').value);
+            
+            const optimizer = new Optimizer(lr, maxIter);
+            const result = optimizer.optimize(initVal);
+            
+            const resultDiv = document.getElementById('optimizerResult');
+            resultDiv.innerHTML = `
+                <strong>Optimization Result:</strong><br>
+                Learning Rate: ${lr}<br>
+                Max Iterations: ${maxIter}<br>
+                Initial Value: ${initVal}<br>
+                <strong>Final Value: ${result.toFixed(6)}</strong>
+            `;
+            resultDiv.classList.add('show');
+        };
+
+        // Initialize WASM on page load
+        initWasm();
+    </script>
+</body>
+</html>

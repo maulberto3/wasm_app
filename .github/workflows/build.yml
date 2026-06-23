@@ -1,0 +1,78 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      
+      - name: Install cargo-leptos
+        run: cargo install cargo-leptos
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      
+      - name: Cache cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-git-
+      
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-target-
+      
+      - name: Run Rust tests
+        run: cargo test --lib --verbose
+      
+      - name: Build Leptos (Debug)
+        run: cargo leptos build --verbose
+      
+      - name: Build Leptos (Release)
+        run: cargo leptos build --release --verbose
+      
+      - name: Display artifact sizes
+        run: |
+          echo "=== Server Binary Size ==="
+          ls -lh target/release/wasm_app_server
+          echo ""
+          echo "=== WASM Module Size ==="
+          ls -lh target/release/wasm_app_server/site/pkg/*.wasm
+      
+      - name: Upload server artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: server-binary
+          path: target/release/wasm_app_server
+          retention-days: 5
+      
+      - name: Upload WASM artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: wasm-package
+          path: target/release/wasm_app_server/site/pkg/
+          retention-days: 5
+

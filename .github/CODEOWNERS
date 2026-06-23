@@ -1,0 +1,9 @@
+# Default code owners for this repository
+* @yourusername
+
+# Workflows
+.github/workflows/ @yourusername
+
+# Dependencies
+Cargo.toml @yourusername
+Cargo.lock @yourusername
