@@ -109,33 +109,90 @@ footer code {
 .cmaes-container {
     background: white;
     border-radius: 12px;
-    padding: 40px;
+    padding: 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    max-width: 1600px;
+    max-width: 2000px;
     width: 100%;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 20px;
+    align-items: start;
 }
 
 .cmaes-container h1 {
     color: #667eea;
     font-size: 2rem;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
+    text-align: center;
 }
 
 .cmaes-container .subtitle {
     color: #666;
     font-size: 1rem;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
     font-style: italic;
+    text-align: center;
 }
 
 .cmaes-container h2 {
     color: #667eea;
     font-size: 1.3rem;
-    margin-top: 30px;
-    margin-bottom: 20px;
+    margin-top: 15px;
+    margin-bottom: 12px;
     border-bottom: 2px solid #667eea;
-    padding-bottom: 10px;
+    padding-bottom: 8px;
+}
+
+.title-span {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    text-align: center;
+}
+
+.controls-left {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+}
+
+.parameters-right {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+}
+
+.population-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+}
+
+.individual-row {
+    background: white;
+    border: 1px solid #d0d8e8;
+    border-radius: 6px;
+    padding: 6px 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: relative;
+}
+
+.individual-label {
+    position: absolute;
+    top: -8px;
+    left: 8px;
+    font-weight: 600;
+    color: white;
+    font-size: 0.65rem;
+    background: #667eea;
+    padding: 2px 6px;
+    border-radius: 3px;
+    z-index: 10;
 }
 
 .config-section,
@@ -143,14 +200,14 @@ footer code {
 .stats-section,
 .parameters-section,
 .status-section {
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
 .config-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .config-item {
@@ -162,16 +219,16 @@ footer code {
 .config-item label {
     font-weight: 600;
     color: #333;
-    margin-bottom: 8px;
-    font-size: 0.95rem;
+    margin-bottom: 4px;
+    font-size: 0.9rem;
 }
 
 .config-item input,
 .config-item select {
-    padding: 10px 12px;
+    padding: 6px 8px;
     border: 2px solid #e0e0e0;
     border-radius: 6px;
-    font-size: 1rem;
+    font-size: 0.9rem;
     transition: border-color 0.2s;
 }
 
@@ -182,16 +239,16 @@ footer code {
 }
 
 .advanced-toggle {
-    margin-top: 15px;
+    margin-top: 8px;
 }
 
 .toggle-button {
     background: #f5f5f5;
     color: #667eea;
     border: 2px solid #667eea;
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: 6px;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -205,22 +262,22 @@ footer code {
 .advanced-section {
     background: #f9f9f9;
     border-left: 4px solid #667eea;
-    padding: 15px;
+    padding: 8px;
     border-radius: 6px;
-    margin-top: 15px;
+    margin-top: 8px;
 }
 
 .button-group {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 8px;
 }
 
 .btn {
-    padding: 12px 24px;
+    padding: 8px 16px;
     border: none;
     border-radius: 8px;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -264,12 +321,12 @@ button:disabled {
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
+    gap: 10px;
 }
 
 .stat-item {
     background: #f9f9f9;
-    padding: 15px;
+    padding: 10px;
     border-radius: 8px;
     border-left: 4px solid #667eea;
     text-align: left;
@@ -277,15 +334,15 @@ button:disabled {
 
 .stat-label {
     display: block;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #666;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: 2px;
 }
 
 .stat-value {
     display: block;
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     color: #667eea;
     font-weight: 700;
     font-family: 'Courier New', monospace;
@@ -300,21 +357,19 @@ button:disabled {
 
 .parameter-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-    gap: 8px;
-    padding: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 4px;
+    padding: 6px;
     background: #f9f9f9;
     border-radius: 8px;
-    max-height: 400px;
-    overflow-y: auto;
 }
 
 .param {
-    padding: 6px 4px;
+    padding: 1px 1px;
     text-align: center;
-    border-radius: 6px;
+    border-radius: 4px;
     font-family: 'Courier New', monospace;
-    font-size: 0.7rem;
+    font-size: 0.55rem;
     font-weight: 600;
     background-color: #e8eef7;
     color: #333;
@@ -326,7 +381,7 @@ button:disabled {
 .status-section {
     background: #f0f7ff;
     border-left: 4px solid #667eea;
-    padding: 15px;
+    padding: 8px;
     border-radius: 8px;
     text-align: center;
 }
@@ -334,12 +389,27 @@ button:disabled {
 .status-text {
     color: #667eea;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 @media (max-width: 768px) {
     .cmaes-container {
         padding: 20px;
+        grid-template-columns: 1fr;
+    }
+
+    .title-span {
+        grid-column: 1;
+    }
+
+    .controls-left {
+        grid-column: 1;
+        grid-row: auto;
+    }
+
+    .parameters-right {
+        grid-column: 1;
+        grid-row: auto;
     }
 
     .config-grid {
@@ -362,5 +432,9 @@ button:disabled {
     .param {
         padding: 8px;
         font-size: 0.75rem;
+    }
+
+    .population-container {
+        max-height: 400px;
     }
 }
