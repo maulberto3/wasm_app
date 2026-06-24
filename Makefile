@@ -98,7 +98,7 @@ test:
 # CI PIPELINE
 # ============================================================================
 
-ci: check check-ssr check-hydrate test build
+ci: fmt check check-ssr check-hydrate test
 	@echo "✅ CI pipeline complete!"
 
 # ============================================================================
@@ -110,17 +110,17 @@ dev: ci
 	@echo "   Visit http://localhost:3000"
 	cargo leptos watch
 
-build:
+dev-build:
 	@echo "🔨 Building debug version (client + server)..."
 	cargo leptos build
 	@echo "✅ Build complete!"
-	@echo "   Run with: make run"
+	@echo "   Run with: make dev-run"
 	@echo ""
 	@echo "📊 Debug Artifact Sizes:"
 	@du -sh target/debug/wasm_app | awk '{print "  Server Binary: " $$1}'
 	@du -sh target/site/pkg/ | awk '{print "  WASM Package: " $$1}'
 
-run: build
+dev-run: dev-build
 	@echo "▶️  Running debug server..."
 	./target/debug/wasm_app
 
@@ -128,16 +128,16 @@ run: build
 # PRODUCTION
 # ============================================================================
 
-build-release:
+build:
 	@echo "🔨 Building optimized release (client + server)..."
 	cargo leptos build --release
 	@echo "✅ Build complete!"
-	@echo "   Run with: make run-release"
+	@echo "   Run with: make run"
 	@echo ""
 	@echo "📊 Release Artifact Sizes:"
 	@du -sh target/release/wasm_app | awk '{print "  Server Binary: " $$1}'
 	@du -sh target/site/pkg/ | awk '{print "  WASM Package: " $$1}'
 
-run-release: build-release
+run: build
 	@echo "▶️  Running release server..."
 	./target/release/wasm_app
