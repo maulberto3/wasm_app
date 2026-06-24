@@ -17,13 +17,61 @@ A full-stack web application with:
 
 ## Prerequisites
 
-- Rust 1.75+ (stable)
-- `cargo-leptos`: `cargo install cargo-leptos`
-- `wasm32-unknown-unknown` target
+- **Rust 1.75+** (stable) - with nightly support for Leptos features
+- **cargo-leptos**: `cargo install --locked cargo-leptos`
+- **WASM target**: `rustup target add wasm32-unknown-unknown`
+- **Node.js** (optional): For additional tooling if needed
+
+## Setup
+
+### 1. Install Rust & Dependencies
+
+```bash
+# Update Rust to latest stable
+rustup update stable
+
+# Add WASM target
+rustup target add wasm32-unknown-unknown
+
+# Install cargo-leptos
+cargo install --locked cargo-leptos
+```
+
+### 2. Clone & Install
+
+```bash
+git clone https://github.com/yourusername/wasm_app.git
+cd wasm_app
+cargo build  # Downloads dependencies
+```
 
 ## Quick Start
 
-### Development with Hot Reload
+### Using Makefile (Recommended)
+
+```bash
+# View all available commands
+make help
+
+# Development with hot reload
+make dev
+
+# Build debug version
+make build
+
+# Run compiled server
+make run
+
+# Build production release
+make build-release
+
+# Run CI pipeline
+make ci
+```
+
+### Manual Commands
+
+#### Development with Hot Reload
 
 ```bash
 cargo leptos watch
@@ -31,14 +79,26 @@ cargo leptos watch
 
 Visit `http://localhost:3000` (server) and `http://localhost:3001` (live reload).
 
-### Production Build
+#### Production Build
 
 ```bash
 cargo leptos build --release
-./target/release/wasm_app_server
+./target/release/wasm_app
 ```
 
 Then visit `http://localhost:3000`
+
+## Understanding the Project
+
+This is a **full-stack Rust application** using Leptos with Server-Side Rendering (SSR) and client-side hydration.
+
+**Key Files:**
+- `src/app.rs` - Shared Leptos components (compiled for both server & browser)
+- `src/main.rs` - Axum server entry point (SSR)
+- `src/lib.rs` - Browser entry point (hydration with WASM)
+- `style/main.css` - Styling (compiled and served by server)
+
+**For a detailed explanation** of how Leptos, Rust, WASM, and JavaScript work together, see [LEPTOS_EXPLAINED.md](LEPTOS_EXPLAINED.md).
 
 ## Project Structure
 
