@@ -5,6 +5,8 @@ use leptos_router::{
     StaticSegment,
 };
 
+use crate::components::CmaesOptimizer;
+
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
         <!DOCTYPE html>
@@ -43,26 +45,9 @@ pub fn App() -> impl IntoView {
 
 #[component]
 fn HomePage() -> impl IntoView {
-    let count = RwSignal::new(0);
-    let on_click = move |_| *count.write() += 1;
-
     view! {
         <div class="container">
-            <header>
-                <h1>Welcome to Leptos!</h1>
-                <p class="subtitle">A full-stack Rust web framework</p>
-            </header>
-
-            <section class="demo">
-                <h2>Counter Example</h2>
-                <button on:click=on_click>
-                    "Click me: " {count}
-                </button>
-            </section>
-
-            <footer>
-                <p>Powered by <code>Leptos</code> + <code>Axum</code> + <code>WASM</code></p>
-            </footer>
+            <CmaesOptimizer/>
         </div>
     }
 }
