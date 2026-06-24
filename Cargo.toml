@@ -2,6 +2,7 @@
 name = "wasm_app"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.93"
 description = "A full-stack Rust web app with CMA-ES optimization and Leptos frontend"
 license = "MIT"
 repository = "https://github.com/yourusername/wasm_app"
@@ -63,6 +64,8 @@ hydrate = [
     "leptos/hydrate",
     "dep:wasm-bindgen",
     "dep:console_error_panic_hook",
+    "dep:web-sys",
+    "dep:js-sys",
 ]
 
 # Fast compilation for development
