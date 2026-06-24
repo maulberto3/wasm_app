@@ -1,0 +1,223 @@
+use gloo_timers::future::sleep;
+use haru_cmaes::params::CmaesParams;
+use haru_cmaes::params::CmaesParamsValidator;
+use haru_cmaes::state::CmaesState;
+use haru_cmaes::state::CmaesStateLogic;
+use haru_cmaes::strategy::{CmaesAlgo, CmaesAlgoOptimizer};
+use leptos::prelude::*;
+use std::time::Duration;
+
+use crate::components::cmaes_helpers::ObjectiveFunction;
+use crate::components::cmaes_helpers::OptimizerState;
+use crate::components::cmaes_state::OptimizerStateSignals;
+
+/// Handle the Start button click (async with proper CMA-ES ask/tell pattern)
+pub async fn handle_start(state: OptimizerStateSignals) {
+    let dims = state.num_dimensions.get();
+    let obj_fn = state.objective_fn.get();
+    let popsize = state.population_size.get();
+
+    state.optimizer_state.set(OptimizerState::Running);
+    state.iteration.set(0);
+    state.best_fitness.set(f32::INFINITY);
+    state.elapsed_ms.set(0.0);
+
+    #[cfg(feature = "hydrate")]
+    let start_time = js_sys::Date::now();
+
+    #[cfg(not(feature = "hydrate"))]
+    let start_time = std::time::Instant::now();
+
+    // Initialize CMA-ES parameters
+    let params = match CmaesParams::new()
+        .and_then(|p| p.set_popsize(popsize))
+        .and_then(|p| p.set_xstart(dims, 0.0))
+    {
+        Ok(p) => p,
+        Err(_) => {
+            state.optimizer_state.set(OptimizerState::Idle);
+            return;
+        }
+    };
+
+    // Create CMA-ES algorithm instance
+    let cmaes = match CmaesAlgo::new(params) {
+        Ok(algo) => algo,
+        Err(_) => {
+            state.optimizer_state.set(OptimizerState::Idle);
+            return;
+        }
+    };
+
+    // Initialize state
+    let mut cmaes_state = match CmaesState::init_state(&cmaes.params) {
+        Ok(s) => s,
+        Err(_) => {
+            state.optimizer_state.set(OptimizerState::Idle);
+            return;
+        }
+    };
+
+    // Helper function to create fitness evaluator
+    fn sphere_eval(x: &nalgebra::DVector<f32>) -> f32 {
+        x.iter().map(|xi| xi * xi).sum()
+    }
+
+    fn rastrigin_eval(x: &nalgebra::DVector<f32>) -> f32 {
+        let n = x.len() as f32;
+        let pi2 = 2.0 * std::f32::consts::PI;
+        10.0 * n
+            + x.iter()
+                .map(|xi| xi * xi - 10.0 * (pi2 * xi).cos())
+                .sum::<f32>()
+    }
+
+    fn ackley_eval(x: &nalgebra::DVector<f32>) -> f32 {
+        let n = x.len() as f32;
+        let sum_sq: f32 = x.iter().map(|xi| xi * xi).sum();
+        let sum_cos: f32 = x
+            .iter()
+            .map(|xi| (2.0 * std::f32::consts::PI * xi).cos())
+            .sum();
+        -20.0 * (-0.2 * (sum_sq / n).sqrt()).exp() - (sum_cos / n).exp()
+            + 20.0
+            + std::f32::consts::E
+    }
+
+    // Function to evaluate fitness for a population
+    let evaluate_pop = |pop: &haru_cmaes::fitness::PopulationY| -> Vec<f32> {
+        pop.y
+            .row_iter()
+            .map(|row| {
+                let row_vec = row.transpose();
+                match obj_fn {
+                    ObjectiveFunction::Sphere => sphere_eval(&row_vec),
+                    ObjectiveFunction::Rastrigin => rastrigin_eval(&row_vec),
+                    ObjectiveFunction::Ackley => ackley_eval(&row_vec),
+                }
+            })
+            .collect()
+    };
+
+    let mut step: i32 = 1;
+    let max_steps: i32 = 1000;
+
+    loop {
+        // Ask for new population
+        let mut pop = match cmaes.ask(&mut cmaes_state) {
+            Ok(p) => p,
+            Err(_) => break,
+        };
+
+        // Evaluate fitness (manually)
+        let fitness_values = evaluate_pop(&pop);
+        let mut fitness = haru_cmaes::fitness::Fitness {
+            values: nalgebra::DVector::from_vec(fitness_values),
+        };
+
+        // Tell CMA-ES about the evaluation
+        cmaes_state = match cmaes.tell(cmaes_state, &mut pop, &mut fitness) {
+            Ok(new_state) => new_state,
+            Err(_) => break,
+        };
+
+        // Update UI with current best
+        if let Ok((_, best_fit)) = cmaes_state.get_best() {
+            let best_fitness_val = best_fit.row(0)[0];
+            state.best_fitness.set(best_fitness_val);
+            state.iteration.set(step as u32);
+
+            // Update parameters display: convert population to flat vec for display
+            // pop.y is a matrix where each column is an individual
+            let population_flat: Vec<f32> = pop.y.iter().copied().collect();
+            state.parameters.set(population_flat);
+
+            #[cfg(feature = "hydrate")]
+            {
+                let now = js_sys::Date::now();
+                state.elapsed_ms.set((now - start_time) as f32);
+            }
+        }
+
+        // Check if optimization is done
+        if let Ok(true) = cmaes.is_done(&cmaes_state, step) {
+            state.optimizer_state.set(OptimizerState::Complete);
+            break;
+        }
+
+        // Safety limit
+        if step >= max_steps {
+            state.optimizer_state.set(OptimizerState::Idle);
+            break;
+        }
+
+        step += 1;
+
+        // Yield control to allow UI updates between iterations
+        sleep(Duration::from_millis(0)).await;
+    }
+
+    #[cfg(feature = "hydrate")]
+    {
+        let now = js_sys::Date::now();
+        state.elapsed_ms.set((now - start_time) as f32);
+    }
+}
+
+/// Handle the Pause/Continue button click
+pub fn handle_pause_continue(state: OptimizerStateSignals) {
+    let current_state = state.optimizer_state.get();
+    if current_state == OptimizerState::Running {
+        state.optimizer_state.set(OptimizerState::Paused);
+    } else if current_state == OptimizerState::Paused {
+        state.optimizer_state.set(OptimizerState::Running);
+    }
+}
+
+/// Handle the Reset button click
+pub fn handle_reset(state: OptimizerStateSignals) {
+    state.optimizer_state.set(OptimizerState::Idle);
+    state.reset_optimization();
+    state.reset_parameters();
+}
+
+/// Handle objective function selection change
+pub fn handle_function_change(state: OptimizerStateSignals, value: String) {
+    match value.as_str() {
+        "sphere" => state.objective_fn.set(ObjectiveFunction::Sphere),
+        "rastrigin" => state.objective_fn.set(ObjectiveFunction::Rastrigin),
+        "ackley" => state.objective_fn.set(ObjectiveFunction::Ackley),
+        _ => {}
+    }
+    state.optimizer_state.set(OptimizerState::Idle);
+    state.reset_optimization();
+    state.reset_parameters();
+}
+
+/// Handle number of dimensions change
+pub fn handle_dimensions_change(state: OptimizerStateSignals, value: String) {
+    if let Ok(n) = value.parse::<usize>() {
+        state.num_dimensions.set(n);
+        state.optimizer_state.set(OptimizerState::Idle);
+        state.reset_optimization();
+        state.reset_parameters();
+    }
+}
+
+/// Handle population size change
+pub fn handle_popsize_change(state: OptimizerStateSignals, value: String) {
+    if let Ok(n) = value.parse::<i32>() {
+        state.population_size.set(n);
+        state.optimizer_state.set(OptimizerState::Idle);
+        state.reset_optimization();
+        state.reset_parameters();
+    }
+}
+
+/// Spawn the async start handler (wrapper for use in event handlers)
+pub fn start_optimization(_state: OptimizerStateSignals) {
+    #[cfg(target_arch = "wasm32")]
+    {
+        wasm_bindgen_futures::spawn_local(handle_start(_state));
+    }
+}
