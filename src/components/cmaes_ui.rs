@@ -190,12 +190,24 @@ pub fn ParametersSection(state: OptimizerStateSignals) -> impl IntoView {
                     let params = state.parameters.get();
                     let dims = state.num_dimensions.get();
                     let pop_size = state.population_size.get() as usize;
+                    let best_idx = state.best_individual_idx.get();
 
                     (0..pop_size)
                         .map(|individual_idx| {
+                            let is_best = best_idx == Some(individual_idx);
                             view! {
                                 <div class="individual-row">
-                                    <span class="individual-label">{format!("Individual {}", individual_idx + 1)}</span>
+                                    <span
+                                        class=move || {
+                                            if is_best {
+                                                "individual-label best-individual".to_string()
+                                            } else {
+                                                "individual-label".to_string()
+                                            }
+                                        }
+                                    >
+                                        {format!("Individual {}", individual_idx + 1)}
+                                    </span>
                                     <div class="parameter-grid">
                                         {(0..dims)
                                             .map(|param_idx| {
