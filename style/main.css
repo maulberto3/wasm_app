@@ -4,6 +4,10 @@
     box-sizing: border-box;
 }
 
+html {
+    scrollbar-gutter: stable;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -12,6 +16,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    scrollbar-gutter: stable;
 }
 
 .container {
@@ -171,6 +176,9 @@ footer code {
     background: #f9f9f9;
     border-radius: 8px;
     border: 2px solid #e0e0e0;
+    max-height: 600px;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
 }
 
 .individual-row {
@@ -193,6 +201,13 @@ footer code {
     padding: 2px 6px;
     border-radius: 3px;
     z-index: 10;
+}
+
+.individual-label.best-individual {
+    background: #4caf50;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
 }
 
 .config-section,
@@ -357,7 +372,7 @@ button:disabled {
 
 .parameter-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
     gap: 4px;
     padding: 6px;
     background: #f9f9f9;
@@ -376,6 +391,7 @@ button:disabled {
     border: 1px solid #d0d8e8;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 50px;
 }
 
 .status-section {
