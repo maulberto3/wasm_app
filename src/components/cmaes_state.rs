@@ -13,6 +13,7 @@ pub struct OptimizerStateSignals {
     pub elapsed_ms: RwSignal<f32>,
     pub parameters: RwSignal<Vec<f32>>,
     pub show_advanced: RwSignal<bool>,
+    pub best_individual_idx: RwSignal<Option<usize>>,
 }
 
 impl OptimizerStateSignals {
@@ -29,6 +30,7 @@ impl OptimizerStateSignals {
             elapsed_ms: RwSignal::new(0.0f32),
             parameters: RwSignal::new(vec![0.0f32; 10]),
             show_advanced: RwSignal::new(false),
+            best_individual_idx: RwSignal::new(None),
         }
     }
 
@@ -36,11 +38,18 @@ impl OptimizerStateSignals {
         self.iteration.set(0);
         self.best_fitness.set(0.0);
         self.elapsed_ms.set(0.0);
+        self.best_individual_idx.set(None);
     }
 
     pub fn reset_parameters(&self) {
         let dims = self.num_dimensions.get();
         let pop_size = self.population_size.get() as usize;
         self.parameters.set(vec![0.0f32; dims * pop_size]);
+    }
+}
+
+impl Default for OptimizerStateSignals {
+    fn default() -> Self {
+        Self::new()
     }
 }
