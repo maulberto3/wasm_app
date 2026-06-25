@@ -282,9 +282,138 @@ Rust gives you a much smaller footprint while being faster and safer.
 - When a signal updates, the UI automatically updates
 - They run inside WASM in the browser
 
+### Signal Batching
+
+Leptos automatically **batches multiple signal updates** into a single re-render within the same synchronous scope:
+
+```rust
+// All three updates happen instantly in sync code
+state.best_fitness.set(current_best);      // Queued
+state.iteration.set(step);                 // Queued
+state.parameters.set(population_data);     // Queued
+
+// Leptos batches all three and performs ONE re-render
+// (Not three separate re-renders!)
+```
+
+**Why this matters:**
+- **Without batching:** 3 signal updates = 3 separate DOM manipulations = slow
+- **With batching:** 3 signal updates = 1 unified DOM update = fast
+
+**Breaking the batch:**
+```rust
+// Same sync scope - still batched together
+state.best_fitness.set(10.0);   // ─┐
+state.iteration.set(5);         // ├─→ Batch #1 (single re-render)
+state.parameters.set(vec);      // ─┘
+
+sleep(Duration::from_millis(0)).await;  // ← Breaks the batch, yields to browser
+
+// Next iteration - new batch
+state.best_fitness.set(11.0);   // ─┐
+state.iteration.set(6);         // ├─→ Batch #2 (another re-render)
+state.parameters.set(vec2);     // ─┘
+```
+
+This is called **fine-grained reactivity**: only affected DOM elements re-render, only once per logical update.
+
+### Real-Time Algorithm Updates in WASM
+
+A powerful pattern is to use signals as a **reactive bridge** between long-running algorithms and the UI:
+
+```rust
+// Algorithm reads initial parameters from signals
+pub async fn handle_start(state: OptimizerStateSignals) {
+    let dims = state.num_dimensions.get();      // Read from signal
+    let popsize = state.population_size.get();  // Read from signal
+    
+    // Initialize algorithm with those parameters
+    let algorithm = CmaesAlgo::new(params);
+    let mut algo_state = CmaesState::init_state(&algorithm.params);
+    
+    // Run optimization loop
+    loop {
+        // Step 1: Ask algorithm for next population to evaluate
+        let population = algorithm.ask(&mut algo_state)?;
+        
+        // Step 2: Evaluate fitness
+        let fitness = evaluate_population(&population);
+        
+        // Step 3: Tell algorithm the results (it adapts)
+        algo_state = algorithm.tell(algo_state, &population, &fitness)?;
+        
+        // Step 4: Update signals (batched together)
+        state.best_fitness.set(current_best);      // ─┐
+        state.iteration.set(step);                 // ├─ Batched into 1 re-render
+        state.parameters.set(population_data);     // ─┘
+        
+        // Step 5: Yield to browser event loop (breaks the batch)
+        sleep(Duration::from_millis(0)).await;     // ← Allows UI to re-render
+        
+        step += 1;                                  // Next iteration = new batch
+    }
+}
+```
+
+**The key insight:** 
+- All three `set()` calls before the `await` are **batched together** into ONE re-render
+- The `await` **breaks the batch** and yields control back to the browser
+- The browser processes the batched signal changes and updates the DOM
+- Execution resumes on the next iteration with a new batch
+
+**Result:** The algorithm runs 100% in WASM, and the UI updates **every single iteration** with minimal DOM thrashing.
+
 ---
 
-## The Compiler is Your Friend
+## How Your Code Gets Into WASM
+
+When you run `make dev` or `make build-release`, the entire compilation process includes **all Rust dependencies**:
+
+```
+src/lib.rs (your entry point)
+    ↓
+imports src/components/cmaes_handlers.rs
+    ↓
+imports haru_cmaes crate (the optimization algorithm)
+    ↓
+everything compiles to: target/site/pkg/wasm_app.wasm
+```
+
+**All of your code + all your dependencies = baked into one .wasm file**
+
+The browser downloads this single file, and it contains:
+- Your UI components
+- Your algorithm handlers
+- The entire CMA-ES optimization library
+- Leptos's reactivity system
+
+---
+
+## wasm-bindgen: The Transparent Glue
+
+`wasm-bindgen` is the bridge between JavaScript and Rust/WASM. Most of the time, **you never explicitly see it**—Leptos handles it automatically:
+
+```rust
+// You just write normal Rust signals
+let best_fitness = create_signal(f32::INFINITY);
+state.best_fitness.set(42.5);  // Updates the UI automagically
+```
+
+Leptos automatically marshals the data across the JS/WASM boundary.
+
+**You only see wasm-bindgen explicitly when you need browser APIs:**
+
+```rust
+#[cfg(target_arch = "wasm32")]
+{
+    wasm_bindgen_futures::spawn_local(handle_start(_state));  // Browser event loop
+    js_sys::Date::now()                                       // Browser timer
+}
+```
+
+These are the **only places** where you're directly reaching into browser APIs. Everything else (signals, components, event handling) is pure Rust that Leptos transparently bridges to JavaScript.
+
+---
 
 The two `Cargo.toml` features tell the compiler how to compile `src/app.rs`:
 
