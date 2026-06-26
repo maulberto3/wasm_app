@@ -1,27 +1,58 @@
-FROM rust:latest as builder
+# Build stage
+FROM rustlang/rust:nightly-trixie as builder
 
+# Install cargo-binstall for easier tool installation
+RUN wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz
+RUN tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz
+RUN cp cargo-binstall /usr/local/cargo/bin
+
+# Install required build tools
+RUN apt-get update -y \
+  && apt-get install -y --no-install-recommends clang \
+  && apt-get clean -y \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install cargo-leptos
+RUN cargo binstall cargo-leptos -y
+
+# Add the WASM target
+RUN rustup target add wasm32-unknown-unknown
+
+# Set working directory
 WORKDIR /app
-
-# Install dependencies
-RUN cargo install cargo-leptos && \
-    rustup target add wasm32-unknown-unknown
-
 COPY . .
 
-# Build application
-RUN cargo leptos build --release
+# Build the app in release mode
+RUN cargo leptos build --release -vv
 
 # Runtime stage
-FROM debian:bookworm-slim
-
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder /app/target/release/wasm_app_server /app/
+FROM debian:trixie-slim as runtime
 
 WORKDIR /app
 
-EXPOSE 3000
+# Install runtime dependencies
+RUN apt-get update -y \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && apt-get autoremove -y \
+  && apt-get clean -y \
+  && rm -rf /var/lib/apt/lists/*
 
-ENV LEPTOS_SITE_ADDR=0.0.0.0:3000
+# Copy the server binary from builder
+COPY --from=builder /app/target/release/wasm_app /app/
 
-CMD ["./wasm_app_server"]
+# Copy static assets (WASM, JS, CSS, HTML)
+COPY --from=builder /app/target/site /app/site
+
+# Copy Cargo.toml (needed at runtime for config)
+COPY --from=builder /app/Cargo.toml /app/
+
+# Set environment variables
+ENV RUST_LOG="info"
+ENV LEPTOS_SITE_ADDR="0.0.0.0:8080"
+ENV LEPTOS_SITE_ROOT="site"
+
+# Expose port
+EXPOSE 8080
+
+# Run the server
+CMD ["/app/wasm_app"]
