@@ -31,7 +31,7 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Stylesheet id="leptos" href="/pkg/wasm_app.css"/>
-        <Title text="Leptos + Axum Counter"/>
+        <Title text="CMA-ES Parameter Optimizer"/>
 
         <Router>
             <main>
