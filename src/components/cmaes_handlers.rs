@@ -27,9 +27,6 @@ pub async fn handle_start(state: OptimizerStateSignals) {
     #[cfg(feature = "hydrate")]
     let start_time = js_sys::Date::now();
 
-    #[cfg(not(feature = "hydrate"))]
-    let start_time = std::time::Instant::now();
-
     // Initialize CMA-ES parameters
     let params = match CmaesParams::new()
         .and_then(|p| p.set_popsize(popsize))
