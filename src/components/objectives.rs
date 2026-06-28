@@ -1,4 +1,4 @@
-use crate::components::cmaes_helpers::ObjectiveFunction;
+use crate::components::core::ObjectiveFunction;
 use haru_cmaes::fitness::{MinOrMax, UserFitness};
 use nalgebra::DVector;
 

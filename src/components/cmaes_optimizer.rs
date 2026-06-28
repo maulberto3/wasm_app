@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 
-use crate::components::cmaes_state::OptimizerStateSignals;
-use crate::components::cmaes_ui::{
+use crate::components::core::OptimizerStateSignals;
+use crate::components::ui::{
     ConfigSection, ControlsSection, ParametersSection, StatsSection, StatusSection,
 };
 

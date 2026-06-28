@@ -8,9 +8,7 @@ use haru_cmaes::strategy::{CmaesAlgo, CmaesAlgoOptimizer};
 use leptos::prelude::*;
 use std::time::Duration;
 
-use crate::components::cmaes_helpers::ObjectiveFunction;
-use crate::components::cmaes_helpers::OptimizerState;
-use crate::components::cmaes_state::OptimizerStateSignals;
+use crate::components::core::{ObjectiveFunction, OptimizerState, OptimizerStateSignals};
 use crate::components::objectives;
 
 /// Handle the Start button click (async with proper CMA-ES ask/tell pattern)
