@@ -1,5 +1,5 @@
 # Build stage
-FROM rustlang/rust:nightly-trixie as builder
+FROM rustlang/rust:nightly-trixie AS builder
 
 # Install cargo-binstall for easier tool installation
 RUN wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz
@@ -25,8 +25,20 @@ COPY . .
 # Build the app in release mode
 RUN cargo leptos build --release -vv
 
+# Display artifact sizes
+RUN echo "=== Build Complete - Artifact Sizes ===" && \
+    echo "" && \
+    echo "Server Binary Size (Release):" && \
+    du -sh /app/target/release/wasm_app && \
+    echo "" && \
+    echo "WASM Package Size:" && \
+    du -sh /app/target/site/pkg/ && \
+    echo "" && \
+    echo "Total Release Build Size:" && \
+    du -sh /app/target/release/
+
 # Runtime stage
-FROM debian:trixie-slim as runtime
+FROM debian:trixie-slim AS runtime
 
 WORKDIR /app
 

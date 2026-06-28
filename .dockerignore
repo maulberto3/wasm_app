@@ -1,0 +1,38 @@
+# Build artifacts and dependencies - MASSIVE (~15GB!)
+target/
+.cargo/
+
+# Version control
+.git/
+.gitignore
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Development files
+node_modules/
+.env
+.env.local
+
+# OS files
+Thumbs.db
+*.log
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# GitHub
+.github/
+
+# Miscellaneous
+README.md
+CONTRIBUTING.md
+LICENSE
+*.md
