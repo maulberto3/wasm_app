@@ -34,6 +34,11 @@ jobs:
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/wasm-app:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/wasm-app:buildcache,mode=max
       
+      - name: Verify Docker image in registry
+        run: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/wasm-app:${{ github.sha }}
+          echo "✅ Docker image successfully built and pushed to registry"
+      
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
@@ -45,10 +50,13 @@ jobs:
         if: always()
         run: |
           if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ Docker image built and deployed successfully!"
+            echo "✅ Docker image built and deployed to Azure successfully!"
             echo "Image: docker.io/${{ secrets.DOCKER_USERNAME }}/wasm-app:${{ github.sha }}"
+            echo "App Name: ${{ secrets.AZURE_APP_NAME }}"
+            echo "The app is now running on Azure App Service"
           else
-            echo "❌ Deployment failed"
+            echo "❌ Deployment to Azure failed"
+            echo "Check the logs above for details"
             exit 1
           fi
 

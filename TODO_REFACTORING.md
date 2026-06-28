@@ -35,6 +35,29 @@
   - Document the signal → UI → CSS pattern used for best individual highlighting
   - Explain pause/resume loop logic
 
+- [ ] **Extract Conditional Feature Blocks in `cmaes_handlers.rs`**
+  - Currently repetitive `#[cfg(feature = "hydrate")]` blocks with elapsed_ms updates
+  - Example pattern to consolidate:
+    ```rust
+    #[cfg(feature = "hydrate")]
+    {
+        let now = js_sys::Date::now();
+        state.elapsed_ms.set((now - start_time) as f32);
+    }
+    ```
+  - Create `update_elapsed_time_if_hydrate(state, start_time)` helper function
+  - Eliminate 3+ duplicate blocks in `handle_start` function
+
+- [ ] **Refactor `handle_start` with `?` Operator & Helper Functions**
+  - Currently uses nested `match` statements for error handling
+  - Replace with `?` operator and extraction helper functions:
+    - `init_params(popsize: i32, dims: usize) -> Result<CmaesParams, String>`
+    - `create_algorithm(params: CmaesParams) -> Result<CmaesAlgo, String>`
+    - `init_cmaes_state(algo: &CmaesAlgo) -> Result<CmaesState, String>`
+  - Each helper should handle its own error case and set `OptimizerState::Idle` on failure
+  - Use `?` to short-circuit and immediately return on any error
+  - Improves readability and reduces nesting depth
+
 ## Lower Priority - Nice-to-haves
 
 - [ ] **Create `src/event_helpers.rs` as utility module**
@@ -44,6 +67,14 @@
 - [ ] **Type Safety for Event Handlers**
   - Consider creating wrapper types for event handlers
   - Could prevent future bugs with type checking
+
+- [ ] **Evaluate `fastrand` for Hydrate-Free Approach**
+  - Investigate using `fastrand` crate for pure Rust RNG instead of `js_sys::Date::now()`
+  - Remove dependency on `#[cfg(feature = "hydrate")]` for timing
+  - Eliminate `gloo_timers` and JS timer dependencies
+  - Potential benefits: simpler code, no browser API coupling, easier testing
+  - Check if elapsed time tracking works adequately with alternative approach
+  - Document findings and feasibility
 
 ## Architecture Notes
 
